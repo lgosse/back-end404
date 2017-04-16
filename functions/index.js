@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const SlackBot = require('slackbots');
 
 const bot = new SlackBot({
-    token: 'xoxb-166622416469-r55yuynOtec3P1WTzxwmb7O8', // Add a bot https://my.slack.com/services/new/bot and put the token  
+    token: functions.config().slackservice.token, // Add a bot https://my.slack.com/services/new/bot and put the token  
     name: 'Support t_ERROR 404'
 });
 
