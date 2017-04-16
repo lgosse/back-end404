@@ -1,0 +1,19 @@
+{
+  "name": "back-end404",
+  "version": "1.0.0",
+  "description": "Back end of the 404 website. Google functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lgosse/back-end404.git"
+  },
+  "author": "lgosse",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lgosse/back-end404/issues"
+  },
+  "homepage": "https://github.com/lgosse/back-end404#readme"
+}
