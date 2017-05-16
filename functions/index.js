@@ -18,13 +18,13 @@ const APP_NAME = 'BDE T_ERROR 404';
 
 exports.sendIdeaBoxNotification = functions.database.ref('/contact/{contactId}')
     .onWrite(event => {
-		if (event.data.previous.exists()) {
-			return;
-		}
+        if (event.data.previous.exists()) {
+            return;
+        }
 
-		if (!event.data.exists()) {
-			return;
-		}
+        if (!event.data.exists()) {
+            return;
+        }
 
         // [START eventAttributes]
         const mailOptions = {
@@ -43,13 +43,13 @@ exports.sendIdeaBoxNotification = functions.database.ref('/contact/{contactId}')
 
 exports.sendIdeaBoxNotification = functions.database.ref('/subscriptions/{eventTitle}/{studentLogin}')
     .onWrite(event => {
-		if (event.data.previous.exists()) {
-			return;
-		}
+        if (event.data.previous.exists()) {
+            return;
+        }
 
-		if (!event.data.exists()) {
-			return;
-		}
+        if (!event.data.exists()) {
+            return;
+        }
 
         // [START eventAttributes]
         const mailOptions = {
@@ -68,13 +68,13 @@ exports.sendIdeaBoxNotification = functions.database.ref('/subscriptions/{eventT
 
 exports.sendContactSlackNotification = functions.database.ref('/contact/{contacId}')
     .onWrite(event => {
-		if (event.data.previous.exists()) {
-			return;
-		}
+        if (event.data.previous.exists()) {
+            return;
+        }
 
-		if (!event.data.exists()) {
-			return;
-		}
+        if (!event.data.exists()) {
+            return;
+        }
 
         var params = {
             icon_emoji: ':e-mail:'
@@ -87,13 +87,13 @@ exports.sendContactSlackNotification = functions.database.ref('/contact/{contacI
 
 exports.sendSubcriptionSlackNotification = functions.database.ref('/subscriptions/{eventTitle}/{studentLogin}')
     .onWrite(event => {
-		if (event.data.previous.exists()) {
-			return;
-		}
+        if (event.data.previous.exists()) {
+            return;
+        }
 
-		if (!event.data.exists()) {
-			return;
-		}
+        if (!event.data.exists()) {
+            return;
+        }
 
         var params = {
             icon_emoji: ':hamster_dance:'
@@ -103,3 +103,8 @@ exports.sendSubcriptionSlackNotification = functions.database.ref('/subscription
 
         bot.postMessageToChannel('support', message, params);
     })
+
+exports.login = functions.https.onRequest((req, res) => {
+    console.log(res);
+
+})
