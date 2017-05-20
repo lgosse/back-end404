@@ -3,16 +3,17 @@
 const functions = require('firebase-functions');
 const nodemailer = require('nodemailer');
 const SlackBot = require('slackbots');
-
-const bot = new SlackBot({
-    token: functions.config().slackservice.token, // Add a bot https://my.slack.com/services/new/bot and put the token  
-    name: 'Support t_ERROR 404'
-});
+const request = require('request');
 
 const gmailEmail = encodeURIComponent(functions.config().gmail.email);
 const gmailPassword = encodeURIComponent(functions.config().gmail.password);
 const mailTransport = nodemailer.createTransport(
     `smtps://${gmailEmail}:${gmailPassword}@smtp.gmail.com`);
+
+const bot = new SlackBot({
+    token: functions.config().slackservice.token, // Add a bot https://my.slack.com/services/new/bot and put the token  
+    name: 'Support t_ERROR 404'
+});
 
 const APP_NAME = 'BDE T_ERROR 404';
 
@@ -99,12 +100,40 @@ exports.sendSubcriptionSlackNotification = functions.database.ref('/subscription
             icon_emoji: ':hamster_dance:'
         };
 
-        var message = 'This student just subscribe ! ' + event.data.val();
+        var message = 'This student: ' + event.data.val() + ' just subscribed to : ' + event.params.eventTitle + '!';
 
         bot.postMessageToChannel('support', message, params);
     })
 
 exports.login = functions.https.onRequest((req, res) => {
-    console.log(res);
+
+    if (req.method !== 'GET') {
+        console.error('Forbidden method called: ' + req.method + '. Trace: ' + JSON.stringify(req));
+        res.status(403).send('Forbidden method.');
+
+        return;
+    }
+
+    var postData = {
+        grant_type: 'authorization_code',
+        client_id: functions.config().intra.uid,
+        client_secret: functions.config().intra.secret,
+        redirect_uri: 'localhost:4200/home',
+        code: req.query.code
+    };
+
+    request({
+        url: 'https://api.intra.42.fr/oauth/token',
+        method: 'POST',
+        json: true,
+        body: postData
+    }, function(error, response, body) {
+        res.status(200).send(body);
+    })
+
+    console.log(req.query.code);
+
+    // res.status(200).send();
+    return;
 
 })
