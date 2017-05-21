@@ -4,6 +4,7 @@ const functions = require('firebase-functions');
 const nodemailer = require('nodemailer');
 const SlackBot = require('slackbots');
 const request = require('request');
+const cors = require('cors')({ origin: true });
 
 const gmailEmail = encodeURIComponent(functions.config().gmail.email);
 const gmailPassword = encodeURIComponent(functions.config().gmail.password);
@@ -118,7 +119,7 @@ exports.login = functions.https.onRequest((req, res) => {
         grant_type: 'authorization_code',
         client_id: functions.config().intra.uid,
         client_secret: functions.config().intra.secret,
-        redirect_uri: 'localhost:4200/home',
+        redirect_uri: 'https://us-central1-website-d0a07.cloudfunctions.net/login',
         code: req.query.code
     };
 
@@ -128,12 +129,45 @@ exports.login = functions.https.onRequest((req, res) => {
         json: true,
         body: postData
     }, function(error, response, body) {
-        res.status(200).send(body);
+        console.log(body.login + ' just loggued in.');
+
+        res.status(200).redirect('https://bde.42.fr/home?access_token=' + body.access_token);
     })
 
-    console.log(req.query.code);
-
-    // res.status(200).send();
     return;
+
+})
+
+exports.userinfo = functions.https.onRequest((req, res) => {
+
+    if (req.method !== 'GET') {
+        console.error('Forbidden method called: ' + req.method + '.');
+        res.status(403).send('Forbidden method.');
+
+        return;
+    }
+
+    cors(req, res, () => {
+        request({
+            url: 'https://api.intra.42.fr/v2/me',
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + req.query.access_token
+            }
+        }, function(error, response, body) {
+            if (error) {
+                console.log(error);
+            }
+            let data = JSON.parse(body, function(key, value) {
+                if (key == 'parent') { return value.id; } else { return value; }
+            });
+            res.status(200).send({
+                first_name: data.first_name,
+                last_name: data.last_name,
+                login: data.login,
+                email: data.email
+            });
+        });
+    })
 
 })
