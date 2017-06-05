@@ -18,6 +18,25 @@ const bot = new SlackBot({
 
 const APP_NAME = 'BDE T_ERROR 404';
 
+exports.sendNewUserNotification = functions.database.ref('/mails/users/{mailId}')
+    .onWrite(event => {
+        if (event.data.previous.exists()) {
+            return;
+        }
+
+        if (!event.data.exists() || !event.data.val().login) {
+            return;
+        }
+
+        var params = {
+            icon_emoji: ':hamster_dance:'
+        };
+
+        var message = 'New user on our Website: ' + event.data.val().login + '. Added to our mailing list';
+
+        bot.postMessageToChannel(functions.config().slackservice.channel, message, params);
+    });
+
 exports.sendIdeaBoxNotification = functions.database.ref('/contact/{contactId}')
     .onWrite(event => {
         if (event.data.previous.exists()) {
@@ -30,14 +49,14 @@ exports.sendIdeaBoxNotification = functions.database.ref('/contact/{contactId}')
 
         // [START eventAttributes]
         const mailOptions = {
-            from: '"T_ERROR 404 Support" <noreply@t_error404.com>',
-            to: 'bde42.l404@gmail.com'
+            from: '"T_ERROR 404 Support" <noreply@bde.42.fr>',
+            to: functions.config().gmail.toaddr
         };
 
         mailOptions.subject = event.data.val().subject;
         mailOptions.text = event.data.val().email + ' sent us : ' + event.data.val().message;
 
-        return mailTransport.sendMail(mailOptions).then(() => {
+        mailTransport.sendMail(mailOptions).then(() => {
             console.log('New email sent to BDE');
         });
 
@@ -55,14 +74,14 @@ exports.sendIdeaBoxNotification = functions.database.ref('/subscriptions/{eventT
 
         // [START eventAttributes]
         const mailOptions = {
-            from: '"T_ERROR 404 Support" <noreply@t_error404.com>',
+            from: '"T_ERROR 404 Support" <noreply@bde.42.fr>',
             to: event.data.val() + '@student.42.fr'
         };
 
         mailOptions.subject = 'Inscription à un event T_ERROR 404';
-        mailOptions.text = 'Coucou ' + event.data.val() + ' ! Merci de t\'être inscrit à notre évènement !';
+        mailOptions.text = 'Coucou ' + event.data.val() + ' ! Merci de t\'être inscrit à ' + event.params.eventTitle;
 
-        return mailTransport.sendMail(mailOptions).then(() => {
+        mailTransport.sendMail(mailOptions).then(() => {
             console.log('New confirmation email sent to Student');
         });
 
@@ -84,7 +103,7 @@ exports.sendContactSlackNotification = functions.database.ref('/contact/{contacI
 
         var message = 'We got a new message from ' + event.data.val().email + '. Subject : ' + event.data.val().subject + ' - Message : ' + event.data.val().message;
 
-        bot.postMessageToChannel('support', message, params);
+        bot.postMessageToChannel(functions.config().slackservice.channel, message, params);
     })
 
 exports.sendSubcriptionSlackNotification = functions.database.ref('/subscriptions/{eventTitle}/{studentLogin}')
@@ -103,7 +122,7 @@ exports.sendSubcriptionSlackNotification = functions.database.ref('/subscription
 
         var message = 'This student: ' + event.data.val() + ' just subscribed to : ' + event.params.eventTitle + '!';
 
-        bot.postMessageToChannel('support', message, params);
+        bot.postMessageToChannel(functions.config().slackservice.channel, message, params);
     })
 
 exports.login = functions.https.onRequest((req, res) => {
@@ -132,6 +151,38 @@ exports.login = functions.https.onRequest((req, res) => {
         console.log(body.login + ' just loggued in.');
 
         res.status(200).redirect('https://bde.42.fr/home?access_token=' + body.access_token);
+    })
+
+    return;
+
+})
+
+exports.logindev = functions.https.onRequest((req, res) => {
+
+    if (req.method !== 'GET') {
+        console.error('Forbidden method called: ' + req.method + '. Trace: ' + JSON.stringify(req));
+        res.status(403).send('Forbidden method.');
+
+        return;
+    }
+
+    cors(req, res, () => {
+        var postData = {
+            grant_type: 'authorization_code',
+            client_id: functions.config().intra.uid,
+            client_secret: functions.config().intra.secret,
+            redirect_uri: 'https://us-central1-website-d0a07.cloudfunctions.net/logindev',
+            code: req.query.code
+        };
+
+        request({
+            url: 'https://api.intra.42.fr/oauth/token',
+            method: 'POST',
+            json: true,
+            body: postData
+        }, function(error, response, body) {
+            res.status(200).redirect('https://staging.prin.tf/home?access_token=' + body.access_token);
+        })
     })
 
     return;
@@ -169,5 +220,27 @@ exports.userinfo = functions.https.onRequest((req, res) => {
             });
         });
     })
+
+})
+
+exports.sendmail = functions.https.onRequest((req, res) => {
+
+    if (req.method !== 'POST') {
+        console.error('Forbidden method called: ' + req.method + '.');
+        res.status(403).send('Forbidden method.');
+
+        return;
+    }
+
+    const mailOptions = {
+        subject: req.body.subject,
+        from: req.body.from,
+        bcc: req.body.bcc,
+        text: req.body.text
+    };
+
+    mailTransport.sendMail(mailOptions).then(() => {
+        console.log('New email sent to ' + req.body.bcc);
+    });
 
 })
