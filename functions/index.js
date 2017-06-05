@@ -6,10 +6,9 @@ const SlackBot = require('slackbots');
 const request = require('request');
 const cors = require('cors')({ origin: true });
 
-const gmailEmail = encodeURIComponent(functions.config().gmail.email);
-const gmailPassword = encodeURIComponent(functions.config().gmail.password);
-const mailTransport = nodemailer.createTransport(
-    `smtps://${gmailEmail}:${gmailPassword}@smtp.gmail.com`);
+const gmailEmail = functions.config().gmail.email;
+const gmailPassword = functions.config().gmail.password;
+const mailTransport = nodemailer.createTransport({ service: 'gmail', auth: { user: gmailEmail, pass: gmailPassword } });
 
 const bot = new SlackBot({
     token: functions.config().slackservice.token, // Add a bot https://my.slack.com/services/new/bot and put the token  
@@ -74,7 +73,7 @@ exports.sendIdeaBoxNotification = functions.database.ref('/subscriptions/{eventT
 
         // [START eventAttributes]
         const mailOptions = {
-            from: '"T_ERROR 404 Support" <noreply@bde.42.fr>',
+            from: '"BDE42 - T_ERROR 404 Support" <noreply@bde.42.fr>',
             to: event.data.val() + '@student.42.fr'
         };
 
@@ -225,6 +224,14 @@ exports.userinfo = functions.https.onRequest((req, res) => {
 
 exports.sendmail = functions.https.onRequest((req, res) => {
 
+    if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'content-type');
+        res.status(200).send();
+
+        return;
+    }
+
     if (req.method !== 'POST') {
         console.error('Forbidden method called: ' + req.method + '.');
         res.status(403).send('Forbidden method.');
@@ -234,13 +241,25 @@ exports.sendmail = functions.https.onRequest((req, res) => {
 
     const mailOptions = {
         subject: req.body.subject,
-        from: req.body.from,
-        bcc: req.body.bcc,
-        text: req.body.text
+        from: '"toto from @bde.42.fr" <noreply@bde.42.fr>',
+        text: 'ntm',
+        to: req.body.bcc,
+        html: req.body.text
     };
 
-    mailTransport.sendMail(mailOptions).then(() => {
+    console.log(mailOptions);
+
+    mailTransport.sendMail(mailOptions).then((res) => {
+        console.log(JSON.stringify(res));
         console.log('New email sent to ' + req.body.bcc);
+    }).catch(err => {
+        console.log(JSON.stringify(err));
     });
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    res.status(200).send();
+
+    return;
 
 })
