@@ -241,7 +241,6 @@ exports.sendmail = functions.https.onRequest((req, res) => {
 
     const mailOptions = {
         subject: req.body.subject,
-        from: '"toto from @bde.42.fr" <noreply@bde.42.fr>',
         text: 'ntm',
         to: req.body.bcc,
         html: req.body.text
