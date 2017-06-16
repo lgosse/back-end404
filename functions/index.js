@@ -8,7 +8,13 @@ const cors = require('cors')({ origin: true });
 
 const gmailEmail = functions.config().gmail.email;
 const gmailPassword = functions.config().gmail.password;
-const mailTransport = nodemailer.createTransport({ service: 'gmail', auth: { user: gmailEmail, pass: gmailPassword } });
+const mailTransport = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: gmailEmail,
+        pass: gmailPassword
+    }
+});
 
 const bot = new SlackBot({
     token: functions.config().slackservice.token, // Add a bot https://my.slack.com/services/new/bot and put the token  
@@ -242,7 +248,7 @@ exports.sendmail = functions.https.onRequest((req, res) => {
     const mailOptions = {
         subject: req.body.subject,
         text: 'ntm',
-        to: req.body.bcc,
+        bcc: req.body.bcc,
         html: req.body.text
     };
 
