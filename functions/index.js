@@ -37,9 +37,23 @@ exports.sendNewUserNotification = functions.database.ref('/mails/users/{mailId}'
             icon_emoji: ':hamster_dance:'
         };
 
-        var message = 'New user on our Website: ' + event.data.val().login + '. Added to our mailing list';
+        var message = 'New user on our Website: https://intra.42.fr/users/' + event.data.val().login + '. Added to our mailing list';
 
         bot.postMessageToChannel(functions.config().slackservice.channel, message, params);
+    });
+
+exports.sendNewEventMail = functions.database.ref('/events/{eventId}')
+    .onWrite(event => {
+        if (event.data.previous.exists()) {
+            return;
+        }
+
+        if (!event.data.exists() || !event.data.val().login) {
+            return;
+        }
+
+        console.log(event.data.val());
+
     });
 
 exports.sendIdeaBoxNotification = functions.database.ref('/contact/{contactId}')
@@ -153,9 +167,13 @@ exports.login = functions.https.onRequest((req, res) => {
         json: true,
         body: postData
     }, function(error, response, body) {
-        console.log(body.login + ' just loggued in.');
+        if (error) {
+            console.log(error);
+        } else {
+            console.log(body.login + ' just loggued in.');
 
-        res.status(200).redirect('https://bde.42.fr/home?access_token=' + body.access_token);
+            res.status(200).redirect('https://bde.42.fr/home?access_token=' + body.access_token);
+        }
     })
 
     return;
