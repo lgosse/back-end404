@@ -37,7 +37,7 @@ exports.sendNewUserNotification = functions.database.ref('/mails/users/{mailId}'
             icon_emoji: ':hamster_dance:'
         };
 
-        var message = 'New user on our Website: https://intra.42.fr/users/' + event.data.val().login + '. Added to our mailing list';
+        var message = 'New user on our Website: https://profile.intra.42.fr/users/' + event.data.val().login + '. Added to our mailing list';
 
         bot.postMessageToChannel(functions.config().slackservice.channel, message, params);
     });
